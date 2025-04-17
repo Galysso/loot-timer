@@ -1,0 +1,14 @@
+{
+	"required": true,
+	"package": "galysso.codicraft.loottimer.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"MinecraftServerMixin",
+		"LootableContainerBlockEntityMixin"
+	],
+	"client": [
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}
