@@ -9,10 +9,6 @@ public class ServerUtil {
         serverInstance = server;
     }
 
-    public static MinecraftServer getServerInstance() {
-        return serverInstance;
-    }
-
     public static long getServerTicks() {
         if (serverInstance != null) {
             return serverInstance.getTicks();

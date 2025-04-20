@@ -1,8 +1,12 @@
 package galysso.codicraft.loottimer.mixin;
 
+import galysso.codicraft.loottimer.access.LootableContainerBlockEntityAccessor;
+import galysso.codicraft.loottimer.util.LootTimerUtil;
 import galysso.codicraft.loottimer.util.ServerUtil;
+import net.minecraft.block.entity.LootableContainerBlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.inventory.LootableInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.loot.LootTable;
 import net.minecraft.registry.RegistryKey;
@@ -16,8 +20,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(net.minecraft.block.entity.LootableContainerBlockEntity.class)
-public class LootableContainerBlockEntityMixin {
+public class LootableContainerBlockEntityMixin implements LootableContainerBlockEntityAccessor {
     private final static long maxTicks = 20*60*5;
+    //private final static long maxTicks = 20*10;
     private long generationDate = -1;
     private Boolean isOnClock = false;
     private Boolean isNormalChest = false;
@@ -59,6 +64,14 @@ public class LootableContainerBlockEntityMixin {
         checkInventory();
     }
 
+    @Inject(method = "isEmpty", at = @At("RETURN"))
+    public void isEmptyAtReturn(CallbackInfoReturnable<Boolean> cir) {
+        if (cir.getReturnValue()) {
+            isOnClock = false;
+            isNormalChest = true;
+        }
+    }
+
     @Inject(method = "getStack", at = @At("HEAD"))
     public void getStack(int slot, CallbackInfoReturnable<ItemStack> cir) {
         checkInventory();
@@ -84,15 +97,19 @@ public class LootableContainerBlockEntityMixin {
         isNormalChest = true;
         if (this instanceof net.minecraft.inventory.Inventory inventory) {
             for (int i = 0; i < inventory.size(); i++) {
-                inventory.setStack(i, ItemStack.EMPTY);
+                if (inventory.getStack(i).contains(LootTimerUtil.getBoundsToPlayerComponent())) {
+                    inventory.setStack(i, ItemStack.EMPTY);
+                }
             }
         }
     }
 
+    @Override
     public Boolean isOnClock() {
         return isOnClock;
     }
 
+    @Override
     public long getRemainingTicks() {
         if (isNormalChest) {
             return 0;
@@ -100,7 +117,7 @@ public class LootableContainerBlockEntityMixin {
         if (isGenerated()) {
             return generationDate + maxTicks - ServerUtil.getServerTicks();
         } else {
-            return maxTicks;
+            return 0;
         }
     }
 }
